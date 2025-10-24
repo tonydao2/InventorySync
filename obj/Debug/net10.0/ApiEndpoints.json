@@ -1,0 +1,28 @@
+[
+  {
+    "ContainingType": "InventorySync.Controllers.SiteflowController",
+    "Method": "GetStock",
+    "RelativePath": "api/Siteflow/stock",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "sku",
+        "Type": "InventorySync.Models.CSVData",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "InventorySync.Controllers.SiteflowController",
+    "Method": "Test",
+    "RelativePath": "api/Siteflow/Test",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
