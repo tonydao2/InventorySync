@@ -15,6 +15,13 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Configuration.AddEnvironmentVariables(); // Load configuration from environment variables later for production
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
