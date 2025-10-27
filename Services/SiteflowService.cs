@@ -14,7 +14,7 @@ namespace InventorySync.Services
         public SiteflowService(IConfiguration configuration, IHttpClientFactory httpClient, ILogger<SiteflowService> logger)
         {
             _configuration = configuration;
-            _httpClient = httpClient;
+            _httpClient = httpClient.CreateClient();
             _siteflowhmacHeader = _configuration["Siteflow:HmacKey"];
             _baseURL = _configuration["Siteflow:BaseURL"];
             _logger = logger;

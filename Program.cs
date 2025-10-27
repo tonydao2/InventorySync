@@ -1,13 +1,14 @@
 using InventorySync.Services;
 using InventorySync.Services.Interfaces;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(); 
-builder.Logging.AddDebug();  
+builder.Logging.AddDebug();
 
 // Add services to the container.
-builder.Services.AddHttpClient<>()
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ISiteflowSerivce, SiteflowService>();
 
 builder.Services.AddControllers();
@@ -20,6 +21,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("InventorySync")
+            .WithTheme(ScalarTheme.DeepSpace)
+            .WithDefaultHttpClient(ScalarTarget.JavaScript, ScalarClient.HttpClient);
+    });
 }
 
 app.UseHttpsRedirection();

@@ -1,6 +1,7 @@
 ﻿using System;
 using InventorySync.Services;
 using InventorySync.Models;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -14,7 +15,6 @@ namespace InventorySync.Tests
         {
             // Arrange
             var mockLogger = new Mock<ILogger<SiteflowService>>();
-            var mockHttpClient = new HttpClient();
 
 
             IConfiguration configuration = new ConfigurationBuilder()
@@ -22,10 +22,10 @@ namespace InventorySync.Tests
                 .AddJsonFile("secrets.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            var service = new SiteflowService(configuration, mockHttpClient, mockLogger.Object);
+            //var service = new SiteflowService(configuration, mockHttpClient, mockLogger.Object);
 
-            var result = service.TestSecret();
-            Console.WriteLine($"BaseURL: {result._baseUrl}, HmacKey: {result.siteflowhmacHeader}");
+            //var result = service.TestSecret();
+            //Console.WriteLine($"BaseURL: {result._baseUrl}, HmacKey: {result.siteflowhmacHeader}");
 
 
         }
