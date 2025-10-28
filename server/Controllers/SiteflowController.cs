@@ -18,15 +18,17 @@ namespace InventorySync.Controllers
             _logger = logger;
         }
 
-        [HttpGet("stocks")]
-        public async Task<IActionResult> GetStock()
+        [HttpPost("test")]
+        public IActionResult TestEndpoint([FromBody] List<CSVData> items)
         {
-            var stock = await _siteflowService.GetSiteflowStockProducts();
 
-            if (stock == null)
-                return StatusCode(500, "Error fetching stock from Siteflow API");
+            foreach (var item in items)
+            {
+                Console.WriteLine($"SKU: {item.Sku}, Quantity: {item.Quantity}");
+            }
 
-            return Ok(stock);
+            // Or inspect it in the debugger
+            return Ok(new { message = "Siteflow endpoint is working", count = items.Count});
         }
 
         [HttpGet("stock")]
@@ -46,20 +48,43 @@ namespace InventorySync.Controllers
         }
 
         [HttpPost("sync")]
-        public async Task<IActionResult> SyncData(CSVData data)
+        public async Task<IActionResult> SyncData(List<CSVData> data)
         {
+            if (data == null || !data.Any())
+                return BadRequest("No data received.");
+
+            var successSkus = new List<string>();
+            var failedSkus = new List<string>();
+
+
             try
             {
-                var result = await _siteflowService.SyncData(data);
+                foreach (var item in data)
+                {
+                    Console.WriteLine($"Processing data for {item.Sku} to change to {item.Quantity}");
+                    var result = await _siteflowService.SyncData(item);
 
-                if (result)
-                {
-                    return Ok("Data synchronized successfully.");
+                    if (result)
+                    {
+                        successSkus.Add(item.Sku);
+                        _logger.LogInformation($"Successful sync for item: {item.Sku}");
+                    }
+                    else
+                    {
+                        failedSkus.Add(item.Sku);
+                        _logger.LogWarning($"Error synchronizing SKU: {item.Sku}");
+                    }
                 }
-                else
+
+                return Ok(new
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "Data synchronization failed.");
-                }
+                    Total = data.Count,
+                    Successful = successSkus.Count,
+                    Failed = failedSkus.Count,
+                    SuccessSkus = successSkus,
+                    FailedSkus = failedSkus
+                });
+
             }
             catch (Exception ex)
             {

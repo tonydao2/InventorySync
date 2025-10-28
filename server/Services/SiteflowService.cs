@@ -127,6 +127,7 @@ namespace InventorySync.Services
         {
             _logger.LogInformation("Syncing data for SKU: {Sku}, Quantity: {Quantity}", data.Sku, data.Quantity);
 
+            // TODO: Cache the product list to avoid fetching all products every time
             var client = _httpClient.CreateClient("siteflow");
             client.BaseAddress = new Uri(_baseURL!);
 

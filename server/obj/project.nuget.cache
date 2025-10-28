@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "lvihgrXDCdE=",
+  "dgSpecHash": "WZ1SMVVPXfk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj",
+  "projectFilePath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\server\\InventorySync.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\BFruth\\.nuget\\packages\\castle.core\\5.1.1\\castle.core.5.1.1.nupkg.sha512",
     "C:\\Users\\BFruth\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.10\\microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",

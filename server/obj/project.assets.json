@@ -1588,11 +1588,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj",
+      "projectUniqueName": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\server\\InventorySync.csproj",
       "projectName": "InventorySync",
-      "projectPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj",
+      "projectPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\server\\InventorySync.csproj",
       "packagesPath": "C:\\Users\\BFruth\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\obj\\",
+      "outputPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\server\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

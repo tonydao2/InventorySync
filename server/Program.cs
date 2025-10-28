@@ -2,10 +2,28 @@ using InventorySync.Services;
 using InventorySync.Services.Interfaces;
 using Scalar.AspNetCore;
 
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(); 
 builder.Logging.AddDebug();
+
+// Enable CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173",
+                "http://www.contoso.com")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+
 
 // Add services to the container.
 // Configure HttpClient for Siteflow API
@@ -47,6 +65,8 @@ if (app.Environment.IsDevelopment())
             .WithDefaultHttpClient(ScalarTarget.JavaScript, ScalarClient.HttpClient);
     });
 }
+
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseHttpsRedirection();
 

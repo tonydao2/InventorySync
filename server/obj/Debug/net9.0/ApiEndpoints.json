@@ -22,16 +22,6 @@
   },
   {
     "ContainingType": "InventorySync.Controllers.SiteflowController",
-    "Method": "GetStock",
-    "RelativePath": "api/Siteflow/stocks",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "InventorySync.Controllers.SiteflowController",
     "Method": "SyncData",
     "RelativePath": "api/Siteflow/sync",
     "HttpMethod": "POST",
@@ -40,7 +30,23 @@
     "Parameters": [
       {
         "Name": "data",
-        "Type": "InventorySync.Models.CSVData",
+        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "InventorySync.Controllers.SiteflowController",
+    "Method": "TestEndpoint",
+    "RelativePath": "api/Siteflow/test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "items",
+        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": true
       }
     ],
