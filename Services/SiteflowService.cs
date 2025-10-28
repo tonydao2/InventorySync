@@ -14,6 +14,7 @@ namespace InventorySync.Services
         private readonly IHttpClientFactory _httpClient;
         private readonly string? _siteflowhmacHeader;
         private readonly string? _siteflowSecret;
+        private readonly string? _siteflowToken;
         private readonly IConfiguration _configuration;
         private readonly string? _baseURL;
         private readonly ILogger _logger;
@@ -23,11 +24,27 @@ namespace InventorySync.Services
             _configuration = configuration;
             _httpClient = httpClient;
             _siteflowhmacHeader = _configuration["Siteflow:HmacKey"];
+            _siteflowToken = _configuration["Siteflow:Token"];
             _baseURL = _configuration["Siteflow:BaseURL"];
             _siteflowSecret = _configuration["Siteflow:secret"];
             _logger = logger;
         }
 
+        
+        private string BuildHmacHeader(string method, string path, string timestamp, string token, string secret)
+        {
+            // Note: must use "METHOD PATH TIMESTAMP" — spaces, not newlines
+            string stringToSign = $"{method} {Uri.UnescapeDataString(path)} {timestamp}";
+
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+            byte[] signatureBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
+
+            // Convert to lowercase hex string (NOT Base64)
+            string signature = BitConverter.ToString(signatureBytes).Replace("-", "").ToLower();
+
+            return $"{token}:{signature}";
+        }
+        
         /// <summary>
         /// Test to retrieve Siteflow products first
         /// </summary>
@@ -39,51 +56,26 @@ namespace InventorySync.Services
             {
                 var client = _httpClient.CreateClient("siteflow");
                 client.BaseAddress = new Uri(_baseURL!); // https://pro-api.oneflowcloud.com/api/
-
-                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"); // seconds only
+                var requestDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                
+                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
                 var method = "GET";
-                var path = "/api/stock"; // exact path for signature
+                var path = "/api/stock"; // EXACT PATH (no domain, no encoding)
 
-                var token = _siteflowhmacHeader ?? throw new InvalidOperationException("Token not configured");
-                var secret = _siteflowSecret ?? throw new InvalidOperationException("Secret not configured");
+                var signature = BuildHmacHeader(method, path, timestamp, _siteflowToken!, _siteflowSecret!);
 
-                // String to sign
-                var stringToSign = $"{method} {path} {timestamp}";
 
-                // HMAC SHA256
-                using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-                var signatureBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
-                var signature = Convert.ToHexString(signatureBytes).ToLower();
-
-                var authHeader = $"{token}:{signature}";
-
-                // Create request
-                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/stock");
-                request.Headers.Add("x-oneflow-authorization", authHeader);
-                request.Headers.Add("x-oneflow-date", timestamp);
-                request.Headers.Add("x-oneflow-algorithm", "SHA256");
-                request.Headers.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
+                client.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256"); // ✅ THIS WAS MISSING
+                client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
 
                 // Send request
-                var httpResponse = await client.SendAsync(request);
+                var httpResponse = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
 
-                _logger.LogInformation("Siteflow API responded with status code: {StatusCode}", httpResponse.StatusCode);
-
-                if (!httpResponse.IsSuccessStatusCode)
-                {
-                    var errorContent = await httpResponse.Content.ReadAsStringAsync();
-                    _logger.LogError("Siteflow API returned error: {Content}", errorContent);
-                    return null;
-                }
-
-                // 6️ Deserialize response
-                var response = await httpResponse.Content.ReadFromJsonAsync<SiteflowApiResponse>();
-                if (response == null)
-                    _logger.LogWarning("Siteflow API returned empty response");
-
-                return response;
-
-
+                return httpResponse;
+                
                 //var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
 
                 //return response;
