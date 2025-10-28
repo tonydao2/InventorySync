@@ -19,11 +19,36 @@ namespace InventorySync.Controllers
         }
 
         [HttpGet("stock")]
-        public async Task<IActionResult> GetStock(CSVData sku)
+        public async Task<IActionResult> GetStock()
         {
-            var stock = await _siteflowService.GetSiteflowStockProducts(sku);
+            var stock = await _siteflowService.GetSiteflowStockProducts();
+
+            if (stock == null)
+                return StatusCode(500, "Error fetching stock from Siteflow API");
+
             return Ok(stock);
         }
-        
+
+        [HttpPost("sync")]
+        public async Task<IActionResult> SyncData(CSVData data)
+        {
+            try
+            {
+                var result = await _siteflowService.SyncData(data);
+                if (result)
+                {
+                    return Ok("Data synchronized successfully.");
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Data synchronization failed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during data synchronization.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred during data synchronization.");
+            }
+        }
     }
 }

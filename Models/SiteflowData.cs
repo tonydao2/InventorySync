@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace InventorySync.Models
 {
@@ -7,7 +8,7 @@ namespace InventorySync.Models
     /// </summary>
     public class SiteflowApiResponse
     {
-        public List<SiteflowDataRaw> Data { get; set; }
+        public List<SiteflowDataRaw>? Data { get; set; }
         public bool Success { get; set; }
         public int Count { get; set; }
         public int Page { get; set; }
@@ -15,7 +16,8 @@ namespace InventorySync.Models
     }
     public class SiteflowDataRaw
     {
-        public string _id { get; set; }
+        [JsonPropertyName("_id")]
+        public string Id { get; set; }
         public string code { get; set; }
         public string barcode { get; set; }
         public string name { get; set; }
