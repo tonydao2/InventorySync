@@ -10,19 +10,15 @@ builder.Logging.AddDebug();
 // Add services to the container.
 // Configure HttpClient for Siteflow API
 builder.Services.AddHttpClient();
-//builder.Services.AddHttpClient("siteflow", (serviceProvider, httpClient) =>
-//{
-//    var config = serviceProvider.GetRequiredService<IConfiguration>();
-//    var baseUrl = config["Siteflow:BaseURL"];
-//    var hmacKey = config["Siteflow:HmacKey"];
-//    var requestDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+builder.Services.AddHttpClient("siteflow", (serviceProvider, httpClient) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var baseUrl = config["Siteflow:BaseURL"];
+    httpClient.BaseAddress = new Uri(baseUrl!);
 
-//    httpClient.BaseAddress = new Uri(baseUrl!);
-    
-//    //httpClient.DefaultRequestHeaders.Add("Accept", "application/json"); // Ensure we accept JSON responses
-//    httpClient.DefaultRequestHeaders.Add("x-oneflow-authorization", hmacKey);
-//    httpClient.DefaultRequestHeaders.Add("x-oneflow-date", requestDate);
-//});
+    httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
+});
 
 builder.Services.AddSingleton<ISiteflowSerivce, SiteflowService>();
 

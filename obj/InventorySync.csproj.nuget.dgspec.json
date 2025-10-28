@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/Users/tonydao/Documents/Project/InventorySync/InventorySync.csproj": {}
+    "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj": {}
   },
   "projects": {
-    "/Users/tonydao/Documents/Project/InventorySync/InventorySync.csproj": {
+    "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/tonydao/Documents/Project/InventorySync/InventorySync.csproj",
+        "projectUniqueName": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj",
         "projectName": "InventorySync",
-        "projectPath": "/Users/tonydao/Documents/Project/InventorySync/InventorySync.csproj",
-        "packagesPath": "/Users/tonydao/.nuget/packages/",
-        "outputPath": "/Users/tonydao/Documents/Project/InventorySync/obj/",
+        "projectPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\InventorySync.csproj",
+        "packagesPath": "C:\\Users\\BFruth\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\BFruth\\Documents\\Projects\\InventorySync\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/Users/tonydao/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\BFruth\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -98,7 +104,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

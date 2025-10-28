@@ -16,10 +16,16 @@ namespace InventorySync.Models
     }
     public class SiteflowDataRaw
     {
-        [JsonPropertyName("_id")]
+        [JsonPropertyName("_id")]  // maps JSON "_id" to C# Id
         public string Id { get; set; }
-        public string code { get; set; }
-        public string barcode { get; set; }
-        public string name { get; set; }
+
+        [JsonPropertyName("code")]
+        public string Code { get; set; }
+
+        [JsonPropertyName("barcode")]
+        public string Barcode { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
     }
 }

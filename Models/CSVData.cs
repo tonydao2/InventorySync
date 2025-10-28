@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace InventorySync.Models
 {
@@ -8,10 +9,11 @@ namespace InventorySync.Models
     public class CSVData
     {
         [Required]
+        [JsonPropertyName("SKU")]
         public string Sku { get; set; }
 
-        // TODO: Change this to real name later
         [Required]
+        [JsonPropertyName("Available Primary")]
         public int Quantity { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace InventorySync.Controllers
             _logger = logger;
         }
 
-        [HttpGet("stock")]
+        [HttpGet("stocks")]
         public async Task<IActionResult> GetStock()
         {
             var stock = await _siteflowService.GetSiteflowStockProducts();
@@ -29,12 +29,29 @@ namespace InventorySync.Controllers
             return Ok(stock);
         }
 
+        [HttpGet("stock")]
+        public async Task<IActionResult> GetStockBySku([FromQuery] CSVData data)
+        {
+            if (data == null || string.IsNullOrEmpty(data.Sku))
+            {
+                return BadRequest("Invalid SKU data.");
+            }
+
+            var stockItem = await _siteflowService.GetSiteflowStockProduct(data);
+
+            if (stockItem == null)
+                return StatusCode(500, "Error fetching item");
+
+            return Ok(stockItem);
+        }
+
         [HttpPost("sync")]
         public async Task<IActionResult> SyncData(CSVData data)
         {
             try
             {
                 var result = await _siteflowService.SyncData(data);
+
                 if (result)
                 {
                     return Ok("Data synchronized successfully.");

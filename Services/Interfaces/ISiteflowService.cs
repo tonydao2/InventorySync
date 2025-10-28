@@ -5,5 +5,7 @@ namespace InventorySync.Services.Interfaces
     public interface ISiteflowSerivce : ISyncService
     {
         Task<SiteflowApiResponse?> GetSiteflowStockProducts();
+
+        Task<SiteflowDataRaw?> GetSiteflowStockProduct(CSVData data);
     }
 }
