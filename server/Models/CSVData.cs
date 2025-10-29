@@ -8,6 +8,9 @@ namespace InventorySync.Models
     /// </summary>
     public class CSVData
     {
+        [JsonPropertyName("Name")]
+        public string Name { get; set; }
+
         [Required]
         [JsonPropertyName("SKU")]
         public string Sku { get; set; }
