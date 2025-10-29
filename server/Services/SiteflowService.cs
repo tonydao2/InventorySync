@@ -172,8 +172,8 @@ namespace InventorySync.Services
                 products = response.Data;
 
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromSeconds(45))
-                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(3600))
+                    .SetSlidingExpiration(TimeSpan.FromHours(4))
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(10))
                     .SetPriority(CacheItemPriority.High);
 
                 _cache.Set(cacheKey, products, cacheEntryOptions);
