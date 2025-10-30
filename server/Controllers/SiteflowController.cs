@@ -55,45 +55,46 @@ namespace InventorySync.Controllers
 
             var successSkus = new List<string>();
             var failedSkus = new List<string>();
-            var sucessfulSku = new Dictionary<string, int>(); // Product name and SKU]
-            var failedSku = new Dictionary<string, int>();
+            var errorDetails = new Dictionary<string, string>(); // Store specific error messages per SKU
 
-            try
+
+            foreach (var item in data)
             {
-                foreach (var item in data)
+                try
                 {
-                    Console.WriteLine($"Processing data for {item.Sku} to change to {item.Quantity}");
+                    Console.WriteLine($"Processing data for SKU: {item.Sku}, Quantity: {item.Quantity}");
                     var result = await _siteflowService.SyncData(item);
 
                     if (result)
                     {
                         successSkus.Add(item.Sku);
-                        sucessfulSku.Add(item.Sku, item.Quantity);
-                        _logger.LogInformation($"Successful sync for item: {item.Sku}");
+                        _logger.LogInformation("Successful sync for item: {Sku}", item.Sku);
                     }
                     else
                     {
                         failedSkus.Add(item.Sku);
-                        failedSku.Add(item.Sku, item.Quantity);
-                        _logger.LogWarning($"Error synchronizing SKU: {item.Sku}");
+                        _logger.LogWarning("Failed to sync SKU: {Sku}", item.Sku);
+                        errorDetails[item.Sku] = "Sync returned false (possibly item not found or update failed)";
                     }
                 }
-
-                return Ok(new
+                catch (Exception ex)
                 {
-                    Total = data.Count,
-                    Successful = successSkus.Count,
-                    Failed = failedSkus.Count,
-                    SuccessSkus = sucessfulSku,
-                    FailedSkus = failedSku
-                });
+                    failedSkus.Add(item.Sku);
+                    _logger.LogError(ex, "Exception syncing SKU: {Sku}", item.Sku);
+                    errorDetails[item.Sku] = ex.Message;
+                }
+            }
 
-            }
-            catch (Exception ex)
+            // Return full summary
+            return Ok(new
             {
-                _logger.LogError(ex, "Error during data synchronization.");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred during data synchronization.");
-            }
+                Total = data.Count,
+                Successful = successSkus.Count,
+                Failed = failedSkus.Count,
+                SuccessSkus = successSkus,
+                FailedSkus = failedSkus,
+                ErrorDetails = errorDetails
+            });
         }
     }
 }

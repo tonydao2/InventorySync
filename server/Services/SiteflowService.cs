@@ -145,11 +145,11 @@ namespace InventorySync.Services
 
             if (_cache.TryGetValue(cacheKey, out IEnumerable<SiteflowDataRaw> products))
             {
-                _logger.Log(LogLevel.Information, "Product found in cache");
+                _logger.Log(LogLevel.Information, "Products found in cache");
             }
             else
             {
-                _logger.Log(LogLevel.Information, "Product not found in cache, fetching from Siteflow API");
+                _logger.Log(LogLevel.Information, "Products not found in cache, fetching from Siteflow API");
 
                 // Get all items
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -182,6 +182,7 @@ namespace InventorySync.Services
 
             // Find specific item
             var item = products?.FirstOrDefault(p => p.Code == data.Sku || p.Barcode == data.Sku);
+            Console.WriteLine(item);
 
             if (item == null)
             {

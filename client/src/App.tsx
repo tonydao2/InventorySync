@@ -3,22 +3,29 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { BASE_URL } from '../src/constant';
 
+type Item = {
+  sku: string;
+};
+
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'successful' | 'unsuccessful'>(
     'successful',
   );
 
-  // Example data for test
-  const successfulItems = [
-    { item: 'Example Item 1', sku: 'SKU123', quantity: 10 },
-    { item: 'Example Item 2', sku: 'SKU124', quantity: 5 },
-  ];
+  const [successfulSiteflow, setSuccessfulSiteflow] = useState<Item[]>([]);
+  const [unsuccessfulSiteflow, setUnsuccessfulSiteflow] = useState<Item[]>([]);
 
-  const unsuccessfulItems = [
-    { item: 'Bad Item 1', sku: 'SKU125', quantity: 0 },
-    { item: 'Bad Item 2', sku: 'SKU126', quantity: 0 },
-  ];
+  // Example data for test
+  // const successfulItems = [
+  //   { item: 'Example Item 1', sku: 'SKU123', quantity: 10 },
+  //   { item: 'Example Item 2', sku: 'SKU124', quantity: 5 },
+  // ];
+
+  // const unsuccessfulItems = [
+  //   { item: 'Bad Item 1', sku: 'SKU125', quantity: 0 },
+  //   { item: 'Bad Item 2', sku: 'SKU126', quantity: 0 },
+  // ];
 
   const handleUpload = () => {
     if (!file) {
@@ -71,20 +78,31 @@ function App() {
 
       const data = await res.json();
       console.log('Backend response:', data);
+
+      console.log(data.successSkus);
+
+      setSuccessfulSiteflow(
+        (data.successSkus || []).map((sku: string) => ({ sku })),
+      );
+      setUnsuccessfulSiteflow(
+        (data.failedSkus || []).map((sku: string) => ({ sku })),
+      );
+
+      console.log(successfulSiteflow);
     } catch (err) {
       console.error('Error sending data to backend:', err);
     }
   };
 
   const displayedItems =
-    activeTab === 'successful' ? successfulItems : unsuccessfulItems;
+    activeTab === 'successful' ? successfulSiteflow : unsuccessfulSiteflow;
 
   return (
     <div className='flex h-screen bg-gray-50'>
       {/* Left sidebar */}
       <div className='w-[35%] bg-white border-r border-gray-200 p-8 flex flex-col mr-'>
         <div className='flex-1 flex flex-col justify-center'>
-          <h1 className='text-xl font-medium text-gray-900 mb-8 justify-center flex font-extrabold'>
+          <h1 className='text-xl text-gray-900 mb-8 justify-center flex font-extrabold'>
             File Upload
           </h1>
 
@@ -175,27 +193,15 @@ function App() {
               <thead>
                 <tr className='border-b border-black-200'>
                   <th className='text-left px-6 py-4 text-xs font-medium text-black-500 uppercase tracking-wider'>
-                    Item
-                  </th>
-                  <th className='text-left px-6 py-4 text-xs font-medium text-black-500 uppercase tracking-wider'>
                     SKU
-                  </th>
-                  <th className='text-left px-6 py-4 text-xs font-medium text-black-500 uppercase tracking-wider'>
-                    Quantity
                   </th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-blac-200'>
                 {displayedItems.map((item, i) => (
                   <tr key={i} className='hover:bg-gray-50 transition-colors'>
-                    <td className='px-6 py-4 text-sm text-gray-900'>
-                      {item.item}
-                    </td>
                     <td className='px-6 py-4 text-sm text-black-600'>
                       {item.sku}
-                    </td>
-                    <td className='px-6 py-4 text-sm text-black-600'>
-                      {item.quantity}
                     </td>
                   </tr>
                 ))}
