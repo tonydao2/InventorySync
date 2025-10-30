@@ -55,7 +55,8 @@ namespace InventorySync.Controllers
 
             var successSkus = new List<string>();
             var failedSkus = new List<string>();
-
+            var sucessfulSku = new Dictionary<string, int>(); // Product name and SKU]
+            var failedSku = new Dictionary<string, int>();
 
             try
             {
@@ -67,11 +68,13 @@ namespace InventorySync.Controllers
                     if (result)
                     {
                         successSkus.Add(item.Sku);
+                        sucessfulSku.Add(item.Sku, item.Quantity);
                         _logger.LogInformation($"Successful sync for item: {item.Sku}");
                     }
                     else
                     {
                         failedSkus.Add(item.Sku);
+                        failedSku.Add(item.Sku, item.Quantity);
                         _logger.LogWarning($"Error synchronizing SKU: {item.Sku}");
                     }
                 }
@@ -81,8 +84,8 @@ namespace InventorySync.Controllers
                     Total = data.Count,
                     Successful = successSkus.Count,
                     Failed = failedSkus.Count,
-                    SuccessSkus = successSkus,
-                    FailedSkus = failedSkus
+                    SuccessSkus = sucessfulSku,
+                    FailedSkus = failedSku
                 });
 
             }

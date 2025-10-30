@@ -1,9 +1,11 @@
-﻿using InventorySync.Models;
+﻿using System.Diagnostics;
+using InventorySync.Models;
 using InventorySync.Services.Interfaces;
 using Microsoft.VisualStudio.TestPlatform.Common;
 using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace InventorySync.Services
@@ -11,21 +13,24 @@ namespace InventorySync.Services
     public class SiteflowService : ISiteflowSerivce
     {
         private readonly IHttpClientFactory _httpClient;
-        private readonly string? _siteflowhmacHeader;
         private readonly string? _siteflowSecret;
         private readonly string? _siteflowToken;
         private readonly IConfiguration _configuration;
         private readonly string? _baseURL;
+        private readonly IMemoryCache _cache;
         private readonly ILogger _logger;
 
-        public SiteflowService(IConfiguration configuration, IHttpClientFactory httpClient, ILogger<SiteflowService> logger)
+        private readonly string cacheKey =  "productsCacheKey";
+
+        public SiteflowService(IConfiguration configuration,
+            IHttpClientFactory httpClient, ILogger<SiteflowService> logger, IMemoryCache cache)
         {
             _configuration = configuration;
             _httpClient = httpClient;
-            _siteflowhmacHeader = _configuration["Siteflow:HmacKey"];
             _siteflowToken = _configuration["Siteflow:Token"];
             _baseURL = _configuration["Siteflow:BaseURL"];
             _siteflowSecret = _configuration["Siteflow:secret"];
+            _cache = cache;
             _logger = logger;
         }
 
@@ -123,30 +128,60 @@ namespace InventorySync.Services
             }
         }
 
+
+        /// <summary>
+        /// Data synchronization method for Siteflow. Updates stock quantity based on CSVData input.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public async Task<bool> SyncData(CSVData data)
         {
             _logger.LogInformation("Syncing data for SKU: {Sku}, Quantity: {Quantity}", data.Sku, data.Quantity);
 
-            // TODO: Cache the product list to avoid fetching all products every time
+            var stopwatch = Stopwatch.StartNew();
+
             var client = _httpClient.CreateClient("siteflow");
             client.BaseAddress = new Uri(_baseURL!);
 
-            // Get all items
-            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            var signature = BuildHmacHeader("GET", "/api/stock", timestamp, _siteflowToken!, _siteflowSecret!);
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<SiteflowDataRaw> products))
+            {
+                _logger.Log(LogLevel.Information, "Product found in cache");
+            }
+            else
+            {
+                _logger.Log(LogLevel.Information, "Product not found in cache, fetching from Siteflow API");
 
-            client.DefaultRequestHeaders.Remove("x-oneflow-date");
-            client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
-            client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
-            client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
+                // Get all items
+                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                var signature = BuildHmacHeader("GET", "/api/stock", timestamp, _siteflowToken!, _siteflowSecret!);
 
-            // Send request
-            var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
+                client.DefaultRequestHeaders.Remove("x-oneflow-date");
+                client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
+                client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
+                client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
+
+                // Send request
+                var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
+
+                if (response?.Data == null)
+                {
+                    _logger.LogError("Failed to fetch products from Siteflow API");
+                    return false;
+                }
+
+                products = response.Data;
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromHours(4))
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(10))
+                    .SetPriority(CacheItemPriority.High);
+
+                _cache.Set(cacheKey, products, cacheEntryOptions);
+                _logger.LogInformation("Products cached successfully");
+            }
 
             // Find specific item
-            var item = response?
-                .Data?
-                .FirstOrDefault(p => p.Code == data.Sku || p.Barcode == data.Sku);
+            var item = products?.FirstOrDefault(p => p.Code == data.Sku || p.Barcode == data.Sku);
 
             if (item == null)
             {
@@ -184,6 +219,8 @@ namespace InventorySync.Services
                     data.Sku, updateResponse.StatusCode, content);
             }
 
+            _logger.LogInformation("Found item {Sku} after {Elapsed} ms", data.Sku, stopwatch.ElapsedMilliseconds);
+            stopwatch.Stop();
             return updateResponse.IsSuccessStatusCode;
 
             
