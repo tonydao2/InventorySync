@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { use, useState } from 'react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { BASE_URL } from '../src/constant';
@@ -7,25 +7,51 @@ type Item = {
   sku: string;
 };
 
+type TabData = {
+  successful: Item[];
+  unsuccessful: Item[];
+  successCount?: number;
+  failCount?: number;
+};
+
 function App() {
   const [file, setFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'successful' | 'unsuccessful'>(
-    'successful',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'View Both' | 'Infigo' | 'Siteflow'
+  >('View Both');
 
   const [successfulSiteflow, setSuccessfulSiteflow] = useState<Item[]>([]);
   const [unsuccessfulSiteflow, setUnsuccessfulSiteflow] = useState<Item[]>([]);
+  const [successfulInfigo, setSuccessfulInfigo] = useState<Item[]>([]);
+  const [unsuccessfulInfigo, setUnsuccessfulInfigo] = useState<Item[]>([]);
+  const [countSiteflowSuccess, setCountSiteflowSuccess] = useState(0);
+  const [countSiteflowFails, setCountSiteflowFails] = useState(0);
+  const [countInfigoSuccess, setCountInfigoSuccess] = useState(0);
+  const [countInfigoFails, setCountInfigoFails] = useState(0);
 
-  // Example data for test
-  // const successfulItems = [
-  //   { item: 'Example Item 1', sku: 'SKU123', quantity: 10 },
-  //   { item: 'Example Item 2', sku: 'SKU124', quantity: 5 },
-  // ];
+  const tabDataMap: Record<'View Both' | 'Siteflow' | 'Infigo', TabData> = {
+    'View Both': {
+      successful: [...successfulSiteflow, ...successfulInfigo],
+      unsuccessful: [...unsuccessfulSiteflow, ...unsuccessfulInfigo],
+      successCount: successfulSiteflow.length + successfulInfigo.length,
+      failCount: unsuccessfulSiteflow.length + unsuccessfulInfigo.length,
+    },
+    Siteflow: {
+      successful: successfulSiteflow,
+      unsuccessful: unsuccessfulSiteflow,
+      successCount: countSiteflowSuccess,
+      failCount: countSiteflowFails,
+    },
+    Infigo: {
+      successful: successfulInfigo,
+      unsuccessful: unsuccessfulInfigo,
+      successCount: countInfigoSuccess,
+      failCount: countInfigoFails,
+    },
+  };
 
-  // const unsuccessfulItems = [
-  //   { item: 'Bad Item 1', sku: 'SKU125', quantity: 0 },
-  //   { item: 'Bad Item 2', sku: 'SKU126', quantity: 0 },
-  // ];
+  const { successful, unsuccessful, successCount, failCount } =
+    tabDataMap[activeTab];
 
   const handleUpload = () => {
     if (!file) {
@@ -87,15 +113,14 @@ function App() {
       setUnsuccessfulSiteflow(
         (data.failedSkus || []).map((sku: string) => ({ sku })),
       );
+      setCountSiteflowFails(data.failed);
+      setCountSiteflowSuccess(data.successful);
 
       console.log(successfulSiteflow);
     } catch (err) {
       console.error('Error sending data to backend:', err);
     }
   };
-
-  const displayedItems =
-    activeTab === 'successful' ? successfulSiteflow : unsuccessfulSiteflow;
 
   return (
     <div className='flex h-screen bg-gray-50'>
@@ -164,49 +189,92 @@ function App() {
 
           <div className='flex gap-8'>
             <button
-              onClick={() => setActiveTab('successful')}
+              onClick={() => setActiveTab('View Both')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'successful'
+                activeTab === 'View Both'
                   ? 'border-gray-900 text-gray-900'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Successful
+              View Both
             </button>
             <button
-              onClick={() => setActiveTab('unsuccessful')}
+              onClick={() => setActiveTab('Infigo')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'unsuccessful'
+                activeTab === 'Infigo'
                   ? 'border-gray-900 text-gray-900'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Unsuccessful
+              Infigo
+            </button>
+            <button
+              onClick={() => setActiveTab('Siteflow')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'Siteflow'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Siteflow
             </button>
           </div>
         </div>
 
         {/* Table */}
         <div className='flex-1 overflow-auto p-8'>
-          <div className='bg-white rounded-lg border border-black-200'>
-            <table className='w-full'>
-              <thead>
-                <tr className='border-b border-black-200'>
-                  <th className='text-left px-6 py-4 text-xs font-medium text-black-500 uppercase tracking-wider'>
-                    SKU
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-blac-200'>
-                {displayedItems.map((item, i) => (
-                  <tr key={i} className='hover:bg-gray-50 transition-colors'>
-                    <td className='px-6 py-4 text-sm text-black-600'>
-                      {item.sku}
-                    </td>
+          <div className='grid grid-cols-2 gap-8'>
+            {/* Successful SKUs Table */}
+            <div className='bg-white rounded-lg border border-gray-200'>
+              <h3 className='px-6 py-4 text-l font-semibold text-gray-700 uppercase'>
+                Successful SKUs
+              </h3>
+              <table className='w-full'>
+                <thead>
+                  <tr className='border-b border-gray-200'>
+                    <th className='text-left px-6 py-2 text-m font-medium text-green-600 uppercase tracking-wider'>
+                      SKU
+                    </th>
+                    <th>{successCount}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className='divide-y divide-gray-200'>
+                  {successful.map((item, i) => (
+                    <tr key={i} className='hover:bg-gray-50 transition-colors'>
+                      <td className='px-6 py-4 text-m text-black-600'>
+                        {item.sku}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Unsuccessful SKUs Table */}
+            <div className='bg-white rounded-lg border border-gray-200'>
+              <h3 className='px-6 py-4 text-l font-semibold text-gray-700 uppercase'>
+                Unsuccessful SKUs
+              </h3>
+              <table className='w-full'>
+                <thead>
+                  <tr className='border-b border-gray-200'>
+                    <th className='text-left px-6 py-2 text-m font-medium text-red-500 uppercase tracking-wider'>
+                      SKU
+                    </th>
+                    <th>{failCount}</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-gray-200'>
+                  {unsuccessful.map((item, i) => (
+                    <tr key={i} className='hover:bg-gray-50 transition-colors'>
+                      <td className='px-6 py-4 text-m text-gray-600'>
+                        {item.sku}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
