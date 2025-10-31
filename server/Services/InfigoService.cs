@@ -1,4 +1,9 @@
-﻿using InventorySync.Services.Interfaces;
+﻿using InventorySync.Models;
+using InventorySync.Services.Interfaces;
+using System.Net.Http;
+using System.Numerics;
+using System.Text;
+using System.Text.Json;
 
 namespace InventorySync.Services
 {
@@ -8,10 +13,68 @@ namespace InventorySync.Services
     /// </summary>
     public class InfigoService : IInfigoService
     {
-        public Task<bool> SyncInfigo(Models.InfigoData infigoData)
+        
+    
+
+    private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpclient;
+        private readonly ILogger _logger;
+        private readonly string? _baseURL;
+        private readonly string? _infigoToken;
+
+        public InfigoService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<InfigoService> logger) {
+            _logger = logger;
+            _httpclient = httpClientFactory;
+            _configuration = configuration;
+            _baseURL = _configuration["Infigo:BaseURL"];
+            _infigoToken = _configuration["Infigo:Token"];
+        }
+
+        public async Task<bool> SyncData(CSVData data)
         {
-            // Implementation for syncing Infigo data goes here.
-            throw new NotImplementedException();
+            _logger.LogInformation("Syncing Infigo data for SKU: {SKU}, Quantity: {Quantity}", data.Sku, data.Quantity);
+
+            var client = _httpclient.CreateClient("infigo");
+
+
+            client.BaseAddress = new Uri(_baseURL!);
+
+            var body = new
+            {
+                SKU = data.Sku,
+                IncludeAttributeCombination = false,
+                RequireExactMatch = true,
+                StockValue = data.Quantity,
+                IsAbsoluteAdjustment = true
+            };
+
+            string jsonContent = JsonSerializer.Serialize(body);
+            StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync("catalog/product/stockbysku", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("API returned HTTP {StatusCode}", response.StatusCode);
+                return false;
+            }
+
+            // Get Content from response
+            string responseBody = await response.Content.ReadAsStringAsync();
+            //_logger.LogInformation("Infigo raw response: {Response}", responseBody);
+
+
+            // Deserialize content
+            InfigoApiResponse? infigoResponse = JsonSerializer.Deserialize<InfigoApiResponse>(responseBody);
+
+            Console.WriteLine($"Success: {infigoResponse?.Success}");
+
+            if (infigoResponse?.Success == true)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

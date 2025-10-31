@@ -1,6 +1,8 @@
 using InventorySync.Services;
 using InventorySync.Services.Interfaces;
 using Scalar.AspNetCore;
+using System.Net.Http.Headers;
+using System.Text;
 
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -27,7 +29,6 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 // Configure HttpClient for Siteflow API
-builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("siteflow", (serviceProvider, httpClient) =>
 {
     var config = serviceProvider.GetRequiredService<IConfiguration>();
@@ -38,7 +39,19 @@ builder.Services.AddHttpClient("siteflow", (serviceProvider, httpClient) =>
     httpClient.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 });
 
+builder.Services.AddHttpClient("infigo", (serviceProvier, httpClient) =>
+{
+    var config = serviceProvier.GetRequiredService<IConfiguration>();
+    var baseUrl = config["Infigo:BaseURL"];
+    httpClient.BaseAddress = new Uri(baseUrl!);
+    var token = config["Infigo:Token"];
+
+    httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("Authorization", "Basic " + token);
+});
+
 builder.Services.AddSingleton<ISiteflowSerivce, SiteflowService>();
+builder.Services.AddSingleton<IInfigoService, InfigoService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

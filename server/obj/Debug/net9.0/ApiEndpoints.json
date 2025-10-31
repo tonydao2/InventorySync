@@ -1,5 +1,21 @@
 [
   {
+    "ContainingType": "InventorySync.Controllers.InfigoController",
+    "Method": "SyncInfigoData",
+    "RelativePath": "api/Infigo/sync",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "data",
+        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "InventorySync.Controllers.SiteflowController",
     "Method": "GetStockBySku",
     "RelativePath": "api/Siteflow/stock",

@@ -16,9 +16,7 @@ type TabData = {
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    'View Both' | 'Infigo' | 'Siteflow'
-  >('View Both');
+  const [activeTab, setActiveTab] = useState<'Infigo' | 'Siteflow'>('Infigo');
 
   const [successfulSiteflow, setSuccessfulSiteflow] = useState<Item[]>([]);
   const [unsuccessfulSiteflow, setUnsuccessfulSiteflow] = useState<Item[]>([]);
@@ -29,13 +27,7 @@ function App() {
   const [countInfigoSuccess, setCountInfigoSuccess] = useState(0);
   const [countInfigoFails, setCountInfigoFails] = useState(0);
 
-  const tabDataMap: Record<'View Both' | 'Siteflow' | 'Infigo', TabData> = {
-    'View Both': {
-      successful: [...successfulSiteflow, ...successfulInfigo],
-      unsuccessful: [...unsuccessfulSiteflow, ...unsuccessfulInfigo],
-      successCount: successfulSiteflow.length + successfulInfigo.length,
-      failCount: unsuccessfulSiteflow.length + unsuccessfulInfigo.length,
-    },
+  const tabDataMap: Record<'Siteflow' | 'Infigo', TabData> = {
     Siteflow: {
       successful: successfulSiteflow,
       unsuccessful: unsuccessfulSiteflow,
@@ -53,7 +45,7 @@ function App() {
   const { successful, unsuccessful, successCount, failCount } =
     tabDataMap[activeTab];
 
-  const handleUpload = () => {
+  const handleUpload = (target: 'Siteflow' | 'Infigo' | 'Both') => {
     if (!file) {
       alert('Please select a file!');
       return;
@@ -61,13 +53,18 @@ function App() {
 
     const fileName = file.name.toLowerCase();
 
+    const processData = (jsonData: unknown[]) => {
+      if (target === 'Siteflow' || target === 'Both') siteflowSync(jsonData);
+      if (target === 'Infigo' || target === 'Both') infigoSync(jsonData);
+    };
+
     if (fileName.endsWith('.csv')) {
       // Parse CSV
       Papa.parse(file, {
         header: true, // treat first row as headers
         complete: (results) => {
           console.log('CSV JSON data:', results.data);
-          siteflowSync(results.data);
+          processData(results.data);
         },
         error: (err) => {
           console.error('CSV parse error:', err);
@@ -85,12 +82,18 @@ function App() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: null });
         console.log('Excel JSON data:', jsonData);
-        siteflowSync(jsonData);
+        processData(jsonData);
       };
       reader.readAsArrayBuffer(file);
     } else {
       alert('Unsupported file type. Please upload CSV or Excel.');
     }
+
+    setFile(null);
+
+    // Also reset the input field so user can select the same file again
+    const input = document.getElementById('file-upload') as HTMLInputElement;
+    if (input) input.value = '';
   };
 
   const siteflowSync = async (jsonData: unknown[]) => {
@@ -117,6 +120,33 @@ function App() {
       setCountSiteflowSuccess(data.successful);
 
       console.log(successfulSiteflow);
+    } catch (err) {
+      console.error('Error sending data to backend:', err);
+    }
+  };
+
+  const infigoSync = async (jsonData: unknown[]) => {
+    console.log('Inside Infigo Sync calling endpoint');
+    try {
+      const res = await fetch(`${BASE_URL}/api/infigo/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData),
+      });
+
+      const data = await res.json();
+      console.log('Backend response:', data);
+
+      console.log(data.successSkus);
+
+      setSuccessfulInfigo(
+        (data.successSkus || []).map((sku: string) => ({ sku })),
+      );
+      setUnsuccessfulInfigo(
+        (data.failedSkus || []).map((sku: string) => ({ sku })),
+      );
+      setCountInfigoFails(data.failed);
+      setCountInfigoSuccess(data.successful);
     } catch (err) {
       console.error('Error sending data to backend:', err);
     }
@@ -157,19 +187,21 @@ function App() {
 
             <div className='flex gap-4'>
               <button
-                onClick={handleUpload}
+                onClick={() => handleUpload('Siteflow')}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Siteflow Inventory
               </button>
+
               <button
-                onClick={handleUpload}
+                onClick={() => handleUpload('Infigo')}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Infigo Inventory
               </button>
+
               <button
-                onClick={handleUpload}
+                onClick={() => handleUpload('Both')}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Both Inventory
@@ -188,16 +220,6 @@ function App() {
           </h2>
 
           <div className='flex gap-8'>
-            <button
-              onClick={() => setActiveTab('View Both')}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'View Both'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              View Both
-            </button>
             <button
               onClick={() => setActiveTab('Infigo')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${

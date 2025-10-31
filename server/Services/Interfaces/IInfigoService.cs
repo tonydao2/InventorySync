@@ -2,8 +2,7 @@
 
 namespace InventorySync.Services.Interfaces
 {
-    public interface IInfigoService
+    public interface IInfigoService : ISyncService
     {
-        Task<bool> SyncInfigo(InfigoData infigoData);
     }
 }
