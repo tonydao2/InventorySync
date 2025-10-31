@@ -150,8 +150,6 @@ function App() {
       );
       setCountSiteflowFails(data.failed);
       setCountSiteflowSuccess(data.successful);
-
-      console.log(successfulSiteflow);
     } catch (err) {
       console.error('Error sending data to backend:', err);
     }
@@ -177,8 +175,6 @@ function App() {
 
       const data = await res.json();
       console.log('Backend response:', data);
-
-      console.log(data.successSkus);
 
       setSuccessfulInfigo(
         (data.successSkus || []).map((sku: string) => ({ sku })),
