@@ -1,12 +1,13 @@
-﻿using System.Diagnostics;
-using InventorySync.Models;
+﻿using InventorySync.Models;
 using InventorySync.Services.Interfaces;
-using Microsoft.VisualStudio.TestPlatform.Common;
-using System.Text;
-using System.Text.Json;
-using System.Security.Cryptography;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.Common;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace InventorySync.Services
 {
@@ -27,9 +28,9 @@ namespace InventorySync.Services
         {
             _configuration = configuration;
             _httpClient = httpClient;
-            _siteflowToken = _configuration["Siteflow:Token"];
-            _baseURL = _configuration["Siteflow:BaseURL"];
-            _siteflowSecret = _configuration["Siteflow:secret"];
+            _siteflowToken = _configuration["Siteflow:Moderna:Token"];
+            _baseURL = _configuration["SiteflowAdmin:BaseURL"];
+            _siteflowSecret = _configuration["Siteflow:Moderna:secret"];
             _cache = cache;
             _logger = logger;
         }
@@ -46,31 +47,45 @@ namespace InventorySync.Services
 
             return $"{token}:{signature}";
         }
-        
+
         /// <summary>
         /// Test to retrieve Siteflow products first
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<SiteflowApiResponse?> GetSiteflowStockProducts()
+        public async Task<SiteflowDataRaw?> GetSiteflowProducts()
         {
             try
             {
                 var client = _httpClient.CreateClient("siteflow");
-                client.BaseAddress = new Uri(_baseURL!);
-                
+
+                var page = 1;
+                var pageSize = 1000; // matches Postman call
+                //var path = $"/api/stock";
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                var signature = BuildHmacHeader("GET", "/api/stock", timestamp, _siteflowToken!, _siteflowSecret!);
+                var path = "/api/stock"; // relative to BaseURL
+                var signature = BuildHmacHeader("GET", path, timestamp, _siteflowToken!, _siteflowSecret!); // include leading /api/ for signature
+
 
                 client.DefaultRequestHeaders.Remove("x-oneflow-date");
                 client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
+                client.DefaultRequestHeaders.Remove("x-oneflow-algorithm");
+
                 client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
                 client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
+                client.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 
                 // Send request
-                var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
+                var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock"); // just relative URI
 
-                return response;
+                var testTarget = "US-RSV-2500016"; // SKU to search for
+
+                foreach (var item in response.Data)
+                {
+                    Console.WriteLine(item.Code);
+                }
+
+                return null;
             }
             catch (HttpRequestException ex)
             {
@@ -97,6 +112,7 @@ namespace InventorySync.Services
                 var client = _httpClient.CreateClient("siteflow");
                 client.BaseAddress = new Uri(_baseURL!);
 
+
                 // Get all items
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
                 var signature = BuildHmacHeader("GET", "/api/stock", timestamp, _siteflowToken!, _siteflowSecret!);
@@ -105,6 +121,8 @@ namespace InventorySync.Services
                 client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
                 client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
                 client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
+                client.DefaultRequestHeaders.Remove("x-oneflow-algorithm");
+                client.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 
                 // Send request
                 var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
@@ -134,14 +152,21 @@ namespace InventorySync.Services
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public async Task<bool> SyncData(CSVData data)
+        public async Task<bool> SyncData(CSVData data, string targetSite)
         {
             _logger.LogInformation("Syncing data for SKU: {Sku}, Quantity: {Quantity}", data.Sku, data.Quantity);
 
             var stopwatch = Stopwatch.StartNew();
 
             var client = _httpClient.CreateClient("siteflow");
-            client.BaseAddress = new Uri(_baseURL!);
+            //client.BaseAddress = new Uri(_baseURL!);
+
+            var token = _configuration[$"Siteflow:{targetSite}:Token"]?.Trim();
+            var secret = _configuration[$"Siteflow:{targetSite}:secret"]?.Trim();
+
+            Console.WriteLine($"Siteflow token: " + token);
+            Console.WriteLine($"Siteflow secret: " + secret);
+            Console.WriteLine(data.Sku);
 
             if (_cache.TryGetValue(cacheKey, out IEnumerable<SiteflowDataRaw> products))
             {
@@ -153,12 +178,16 @@ namespace InventorySync.Services
 
                 // Get all items
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                var signature = BuildHmacHeader("GET", "/api/stock", timestamp, _siteflowToken!, _siteflowSecret!);
+                var signature = BuildHmacHeader("GET", "/api/stock", timestamp, token!, secret!);
+
+                Console.WriteLine($"Signature: {signature}");
 
                 client.DefaultRequestHeaders.Remove("x-oneflow-date");
                 client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
                 client.DefaultRequestHeaders.Add("x-oneflow-date", timestamp);
                 client.DefaultRequestHeaders.Add("x-oneflow-authorization", signature);
+                client.DefaultRequestHeaders.Remove("x-oneflow-algorithm");
+                client.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 
                 // Send request
                 var response = await client.GetFromJsonAsync<SiteflowApiResponse>("stock");
@@ -169,7 +198,29 @@ namespace InventorySync.Services
                     return false;
                 }
 
+                if (response?.Data != null)
+                {
+                    Console.WriteLine($"Total products fetched: {response.Data.Count}");
+                }
+                else
+                {
+                    Console.WriteLine("No products returned from Siteflow API");
+                }
+
                 products = response.Data;
+
+                var targetId = "68a960b304a394168ee7365b";
+
+                var testDefaultitem = products?.FirstOrDefault(p => p.Id == targetId);
+
+                if (testDefaultitem != null)
+                {
+                    Console.WriteLine($"Found item: {testDefaultitem.Code} / {testDefaultitem.Barcode} / {testDefaultitem.Id}");
+                }
+                else
+                {
+                    Console.WriteLine("Item not found!");
+                }
 
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromHours(4))
@@ -184,6 +235,7 @@ namespace InventorySync.Services
             var item = products?.FirstOrDefault(p => p.Code == data.Sku || p.Barcode == data.Sku);
             Console.WriteLine(item);
 
+
             if (item == null)
             {
                 _logger.LogError("Item not found for SKU: {Sku}", data.Sku);
@@ -192,12 +244,14 @@ namespace InventorySync.Services
 
             // Call the API to update the stock quantity
             var updateTimestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            var updateSignature = BuildHmacHeader("PUT", $"/api/stock/{item.Id}", updateTimestamp, _siteflowToken!, _siteflowSecret!);
+            var updateSignature = BuildHmacHeader("PUT", $"/api/stock/{item.Id}", updateTimestamp, token!, secret!);
 
             client.DefaultRequestHeaders.Remove("x-oneflow-date");
             client.DefaultRequestHeaders.Remove("x-oneflow-authorization");
             client.DefaultRequestHeaders.Add("x-oneflow-date", updateTimestamp);
             client.DefaultRequestHeaders.Add("x-oneflow-authorization", updateSignature);
+            client.DefaultRequestHeaders.Remove("x-oneflow-algorithm");
+            client.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 
             var payload = new { stockLevel = data.Quantity };
 

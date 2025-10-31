@@ -18,17 +18,25 @@ namespace InventorySync.Controllers
             _logger = logger;
         }
 
-        [HttpPost("test")]
-        public IActionResult TestEndpoint([FromBody] List<CSVData> items)
+        [HttpGet("test")]
+        public async Task<IActionResult> TestEndpoint()
         {
-
-            foreach (var item in items)
+            try
             {
-                Console.WriteLine($"SKU: {item.Sku}, Quantity: {item.Quantity}");
-            }
+                // Call the service to fetch all Siteflow products
+                var products = await _siteflowService.GetSiteflowProducts();
 
-            // Or inspect it in the debugger
-            return Ok(new { message = "Siteflow endpoint is working", count = items.Count});
+                // Return count and optionally a few items for inspection
+                return Ok(new
+                {
+                    message = "Siteflow endpoint is working",
+                    prodcut = products
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error fetching products", error = ex.Message });
+            }
         }
 
         [HttpGet("stock")]
@@ -48,22 +56,22 @@ namespace InventorySync.Controllers
         }
 
         [HttpPost("sync")]
-        public async Task<IActionResult> SyncData(List<CSVData> data)
+        public async Task<IActionResult> SyncData([FromBody] SyncRequest request)
         {
-            if (data == null || !data.Any())
-                return BadRequest("No data received.");
+            if (request.Data == null || !request.Data.Any())
+                return BadRequest("No data provided");
 
             var successSkus = new List<string>();
             var failedSkus = new List<string>();
             var errorDetails = new Dictionary<string, string>(); // Store specific error messages per SKU
 
 
-            foreach (var item in data)
+            foreach (var item in request.Data)
             {
                 try
                 {
                     Console.WriteLine($"Processing data for SKU: {item.Sku}, Quantity: {item.Quantity}");
-                    var result = await _siteflowService.SyncData(item);
+                    var result = await _siteflowService.SyncData(item, request.Target);
 
                     if (result)
                     {
@@ -88,7 +96,7 @@ namespace InventorySync.Controllers
             // Return full summary
             return Ok(new
             {
-                Total = data.Count,
+                Total = request.Data.Count,
                 Successful = successSkus.Count,
                 Failed = failedSkus.Count,
                 SuccessSkus = successSkus,

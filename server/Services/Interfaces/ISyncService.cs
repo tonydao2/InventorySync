@@ -4,6 +4,6 @@ namespace InventorySync.Services.Interfaces
 {
     public interface ISyncService
     {
-        Task<bool> SyncData(CSVData data); // Used in both InfigoService and SiteflowService
+        Task<bool> SyncData(CSVData data, string targetSite); // Used in both InfigoService and SiteflowService
     }
 }

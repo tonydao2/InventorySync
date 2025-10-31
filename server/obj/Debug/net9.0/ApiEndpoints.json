@@ -8,8 +8,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "data",
-        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Name": "request",
+        "Type": "InventorySync.Models.SyncRequest",
         "IsRequired": true
       }
     ],
@@ -45,8 +45,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "data",
-        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Name": "request",
+        "Type": "InventorySync.Models.SyncRequest",
         "IsRequired": true
       }
     ],
@@ -56,16 +56,10 @@
     "ContainingType": "InventorySync.Controllers.SiteflowController",
     "Method": "TestEndpoint",
     "RelativePath": "api/Siteflow/test",
-    "HttpMethod": "POST",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "items",
-        "Type": "System.Collections.Generic.List\u00601[[InventorySync.Models.CSVData, InventorySync, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": true
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   }
 ]

@@ -13,31 +13,28 @@ namespace InventorySync.Services
     /// </summary>
     public class InfigoService : IInfigoService
     {
-        
-    
-
     private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpclient;
         private readonly ILogger _logger;
-        private readonly string? _baseURL;
         private readonly string? _infigoToken;
 
         public InfigoService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<InfigoService> logger) {
             _logger = logger;
             _httpclient = httpClientFactory;
             _configuration = configuration;
-            _baseURL = _configuration["Infigo:BaseURL"];
-            _infigoToken = _configuration["Infigo:Token"];
         }
 
-        public async Task<bool> SyncData(CSVData data)
+        public async Task<bool> SyncData(CSVData data, string target)
         {
             _logger.LogInformation("Syncing Infigo data for SKU: {SKU}, Quantity: {Quantity}", data.Sku, data.Quantity);
 
             var client = _httpclient.CreateClient("infigo");
 
+            var token = _configuration[$"Infigo:{target}:Token"];
 
-            client.BaseAddress = new Uri(_baseURL!);
+            Console.WriteLine($"Infigo Token: " + token);
+
+            client.DefaultRequestHeaders.Add("Authorization", "Basic " + token);
 
             var body = new
             {
@@ -61,8 +58,6 @@ namespace InventorySync.Services
 
             // Get Content from response
             string responseBody = await response.Content.ReadAsStringAsync();
-            //_logger.LogInformation("Infigo raw response: {Response}", responseBody);
-
 
             // Deserialize content
             InfigoApiResponse? infigoResponse = JsonSerializer.Deserialize<InfigoApiResponse>(responseBody);
