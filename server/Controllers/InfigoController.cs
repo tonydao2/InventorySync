@@ -34,13 +34,11 @@ namespace InventorySync.Controllers
             {
                 try
                 {
-                    Console.WriteLine($"Processing data for SKU: {item.Sku}, Quantity: {item.Quantity}");
                     var result = await _infigoService.SyncData(item, request.Target);
 
                     if (result)
                     {
                         successSkus.Add(item.Sku);
-                        _logger.LogInformation("Successful sync for item: {Sku}", item.Sku);
                     }
                     else
                     {

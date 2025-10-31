@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("InventorySync")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa10a7915e0f5dd9ebd77562bfab025338a5a0f6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3621945b864f007e48036b6ba5bdc9bab90e871f")]
 [assembly: System.Reflection.AssemblyProductAttribute("InventorySync")]
 [assembly: System.Reflection.AssemblyTitleAttribute("InventorySync")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

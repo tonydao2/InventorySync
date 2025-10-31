@@ -26,9 +26,9 @@ function App() {
   const [countSiteflowFails, setCountSiteflowFails] = useState(0);
   const [countInfigoSuccess, setCountInfigoSuccess] = useState(0);
   const [countInfigoFails, setCountInfigoFails] = useState(0);
-  const [target, setTarget] = useState<'Moderna' | 'Syndax' | 'TestSite'>(
-    'TestSite',
-  );
+  const [target, setTarget] = useState<
+    'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite'
+  >('Moderna');
 
   const tabDataMap: Record<'Siteflow' | 'Infigo', TabData> = {
     Siteflow: {
@@ -50,7 +50,7 @@ function App() {
 
   const handleUpload = (
     target: 'Siteflow' | 'Infigo' | 'Both',
-    targetSite?: 'Moderna' | 'Syndax' | 'TestSite',
+    targetSite?: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
   ) => {
     if (!file) {
       alert('Please select a file!');
@@ -120,7 +120,7 @@ function App() {
 
   const siteflowSync = async (
     jsonData: unknown[],
-    targetSite: 'Moderna' | 'Syndax' | 'TestSite',
+    targetSite: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
   ) => {
     console.log('Inside Siteflow Sync calling endpoint');
     console.log(`Target site: ${targetSite}`);
@@ -159,7 +159,7 @@ function App() {
 
   const infigoSync = async (
     jsonData: unknown[],
-    targetSite: 'Moderna' | 'Syndax' | 'TestSite',
+    targetSite: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
   ) => {
     console.log('Inside Infigo Sync calling endpoint');
     console.log(`Target site: ${targetSite}`);
@@ -233,12 +233,19 @@ function App() {
               <select
                 value={target}
                 onChange={(e) =>
-                  setTarget(e.target.value as 'Moderna' | 'Syndax' | 'TestSite')
+                  setTarget(
+                    e.target.value as
+                      | 'Moderna'
+                      | 'Syndax'
+                      | 'Pharvaris'
+                      | 'TestSite',
+                  )
                 }
                 className='w-full border border-gray-300 rounded-lg px-3 py-2'
               >
                 <option value='Moderna'>Moderna</option>
                 <option value='Syndax'>Syndax</option>
+                <option value='Pharvaris'>Pharvaris</option>
                 <option value='TestSite'>TestSite</option>
               </select>
             </div>

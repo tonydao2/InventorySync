@@ -32,8 +32,6 @@ namespace InventorySync.Services
 
             var token = _configuration[$"Infigo:{target}:Token"];
 
-            Console.WriteLine($"Infigo Token: " + token);
-
             client.DefaultRequestHeaders.Add("Authorization", "Basic " + token);
 
             var body = new
@@ -61,8 +59,6 @@ namespace InventorySync.Services
 
             // Deserialize content
             InfigoApiResponse? infigoResponse = JsonSerializer.Deserialize<InfigoApiResponse>(responseBody);
-
-            Console.WriteLine($"Success: {infigoResponse?.Success}");
 
             if (infigoResponse?.Success == true)
             {

@@ -23,14 +23,11 @@ namespace InventorySync.Controllers
         {
             try
             {
-                // Call the service to fetch all Siteflow products
-                var products = await _siteflowService.GetSiteflowProducts();
-
-                // Return count and optionally a few items for inspection
+                var products = await _siteflowService.GetAllSiteflowProducts("TestSite");
                 return Ok(new
                 {
-                    message = "Siteflow endpoint is working",
-                    prodcut = products
+                    totalProducts = products.Count,
+                    products = products
                 });
             }
             catch (Exception ex)
@@ -70,13 +67,11 @@ namespace InventorySync.Controllers
             {
                 try
                 {
-                    Console.WriteLine($"Processing data for SKU: {item.Sku}, Quantity: {item.Quantity}");
                     var result = await _siteflowService.SyncData(item, request.Target);
 
                     if (result)
                     {
                         successSkus.Add(item.Sku);
-                        _logger.LogInformation("Successful sync for item: {Sku}", item.Sku);
                     }
                     else
                     {
