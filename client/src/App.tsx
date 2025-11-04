@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { BASE_URL } from '../src/constant';
@@ -50,7 +50,7 @@ function App() {
 
   const handleUpload = (
     target: 'Siteflow' | 'Infigo' | 'Both',
-    targetSite?: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
+    targetSite: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
   ) => {
     if (!file) {
       alert('Please select a file!');

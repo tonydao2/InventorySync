@@ -1,0 +1,20 @@
+# Use latest LTS version of Node.js
+FROM node:20-alpine
+
+# Set working directory inside container
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of application files
+COPY . .
+
+# Expose the port app runs on
+EXPOSE 5173
+
+# Define the command to run app
+CMD ["npm", "run", "dev"]
