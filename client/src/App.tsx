@@ -26,6 +26,9 @@ function App() {
   const [countSiteflowFails, setCountSiteflowFails] = useState(0);
   const [countInfigoSuccess, setCountInfigoSuccess] = useState(0);
   const [countInfigoFails, setCountInfigoFails] = useState(0);
+  const [target, setTarget] = useState<
+    'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite'
+  >('Moderna');
 
   const tabDataMap: Record<'Siteflow' | 'Infigo', TabData> = {
     Siteflow: {
@@ -45,7 +48,10 @@ function App() {
   const { successful, unsuccessful, successCount, failCount } =
     tabDataMap[activeTab];
 
-  const handleUpload = (target: 'Siteflow' | 'Infigo' | 'Both') => {
+  const handleUpload = (
+    target: 'Siteflow' | 'Infigo' | 'Both',
+    targetSite?: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
+  ) => {
     if (!file) {
       alert('Please select a file!');
       return;
@@ -54,8 +60,24 @@ function App() {
     const fileName = file.name.toLowerCase();
 
     const processData = (jsonData: unknown[]) => {
-      if (target === 'Siteflow' || target === 'Both') siteflowSync(jsonData);
-      if (target === 'Infigo' || target === 'Both') infigoSync(jsonData);
+      if ((target === 'Infigo' || target === 'Both') && targetSite) {
+        // Clear previous results for this target
+        setSuccessfulInfigo([]);
+        setUnsuccessfulInfigo([]);
+        setCountInfigoSuccess(0);
+        setCountInfigoFails(0);
+
+        infigoSync(jsonData, targetSite);
+      }
+
+      if (target === 'Siteflow' || (target === 'Both' && targetSite)) {
+        setSuccessfulSiteflow([]);
+        setUnsuccessfulSiteflow([]);
+        setCountSiteflowSuccess(0);
+        setCountSiteflowFails(0);
+
+        siteflowSync(jsonData, targetSite);
+      }
     };
 
     if (fileName.endsWith('.csv')) {
@@ -96,13 +118,23 @@ function App() {
     if (input) input.value = '';
   };
 
-  const siteflowSync = async (jsonData: unknown[]) => {
+  const siteflowSync = async (
+    jsonData: unknown[],
+    targetSite: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
+  ) => {
     console.log('Inside Siteflow Sync calling endpoint');
+    console.log(`Target site: ${targetSite}`);
+
+    const payload = {
+      data: jsonData,
+      targetSite: targetSite,
+    };
+
     try {
       const res = await fetch(`${BASE_URL}/api/siteflow/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(jsonData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -118,26 +150,31 @@ function App() {
       );
       setCountSiteflowFails(data.failed);
       setCountSiteflowSuccess(data.successful);
-
-      console.log(successfulSiteflow);
     } catch (err) {
       console.error('Error sending data to backend:', err);
     }
   };
 
-  const infigoSync = async (jsonData: unknown[]) => {
+  const infigoSync = async (
+    jsonData: unknown[],
+    targetSite: 'Moderna' | 'Syndax' | 'Pharvaris' | 'TestSite',
+  ) => {
     console.log('Inside Infigo Sync calling endpoint');
+    console.log(`Target site: ${targetSite}`);
+
+    const payload = {
+      data: jsonData,
+      targetSite: targetSite,
+    };
     try {
       const res = await fetch(`${BASE_URL}/api/infigo/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(jsonData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       console.log('Backend response:', data);
-
-      console.log(data.successSkus);
 
       setSuccessfulInfigo(
         (data.successSkus || []).map((sku: string) => ({ sku })),
@@ -185,23 +222,47 @@ function App() {
               </label>
             </div>
 
+            <div>
+              <label className='block text-gray-700 text-sm mb-1'>
+                Select Infigo Target
+              </label>
+              <select
+                value={target}
+                onChange={(e) =>
+                  setTarget(
+                    e.target.value as
+                      | 'Moderna'
+                      | 'Syndax'
+                      | 'Pharvaris'
+                      | 'TestSite',
+                  )
+                }
+                className='w-full border border-gray-300 rounded-lg px-3 py-2'
+              >
+                <option value='Moderna'>Moderna</option>
+                <option value='Syndax'>Syndax</option>
+                <option value='Pharvaris'>Pharvaris</option>
+                <option value='TestSite'>TestSite</option>
+              </select>
+            </div>
+
             <div className='flex gap-4'>
               <button
-                onClick={() => handleUpload('Siteflow')}
+                onClick={() => handleUpload('Siteflow', target)}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Siteflow Inventory
               </button>
 
               <button
-                onClick={() => handleUpload('Infigo')}
+                onClick={() => handleUpload('Infigo', target)}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Infigo Inventory
               </button>
 
               <button
-                onClick={() => handleUpload('Both')}
+                onClick={() => handleUpload('Both', target)}
                 className='w-[33%] bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors'
               >
                 Sync Both Inventory

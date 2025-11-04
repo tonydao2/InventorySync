@@ -36,7 +36,6 @@ builder.Services.AddHttpClient("siteflow", (serviceProvider, httpClient) =>
     httpClient.BaseAddress = new Uri(baseUrl!);
 
     httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("x-oneflow-algorithm", "SHA256");
 });
 
 builder.Services.AddHttpClient("infigo", (serviceProvier, httpClient) =>
@@ -44,10 +43,8 @@ builder.Services.AddHttpClient("infigo", (serviceProvier, httpClient) =>
     var config = serviceProvier.GetRequiredService<IConfiguration>();
     var baseUrl = config["Infigo:BaseURL"];
     httpClient.BaseAddress = new Uri(baseUrl!);
-    var token = config["Infigo:Token"];
 
     httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("Authorization", "Basic " + token);
 });
 
 builder.Services.AddSingleton<ISiteflowSerivce, SiteflowService>();

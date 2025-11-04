@@ -21,26 +21,24 @@ namespace InventorySync.Controllers
 
 
         [HttpPost("sync")]
-        public async Task<IActionResult> SyncInfigoData([FromBody] List<CSVData> data)
+        public async Task<IActionResult> SyncInfigoData([FromBody] SyncRequest request)
         {
-            if (data == null || !data.Any())
-                return BadRequest("No data received.");
+            if (request.Data == null || !request.Data.Any())
+                return BadRequest("No data provided");
 
             var successSkus = new List<string>();
             var failedSkus = new List<string>();
             var errorDetails = new Dictionary<string, string>(); // Store specific error messages per SKU
 
-            foreach (var item in data)
+            foreach (var item in request.Data)
             {
                 try
                 {
-                    Console.WriteLine($"Processing data for SKU: {item.Sku}, Quantity: {item.Quantity}");
-                    var result = await _infigoService.SyncData(item);
+                    var result = await _infigoService.SyncData(item, request.Target);
 
                     if (result)
                     {
                         successSkus.Add(item.Sku);
-                        _logger.LogInformation("Successful sync for item: {Sku}", item.Sku);
                     }
                     else
                     {
@@ -60,7 +58,7 @@ namespace InventorySync.Controllers
             // Return full summary
             return Ok(new
             {
-                Total = data.Count,
+                Total = request.Data.Count,
                 Successful = successSkus.Count,
                 Failed = failedSkus.Count,
                 SuccessSkus = successSkus,
