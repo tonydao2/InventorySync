@@ -9,21 +9,25 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole(); 
+builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 // Enable CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173",
-                "http://www.contoso.com")
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy("MyAllowSpecificOrigins", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173", // React dev
+                "http://localhost:3002", // Direct backend dev access
+                "http://localhost"       // NGINX reverse proxy prod setup
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
+
 
 
 
