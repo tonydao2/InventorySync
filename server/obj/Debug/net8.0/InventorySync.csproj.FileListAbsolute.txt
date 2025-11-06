@@ -1,7 +1,0 @@
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.csproj.AssemblyReference.cache
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\rpswa.dswa.cache.json
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.AssemblyInfoInputs.cache
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.AssemblyInfo.cs
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.csproj.CoreCompileInputs.cache
-C:\Users\BFruth\Documents\Projects\InventorySync\obj\Debug\net8.0\InventorySync.MvcApplicationPartsAssemblyInfo.cache

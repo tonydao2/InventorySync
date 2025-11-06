@@ -1,0 +1,17 @@
+.env
+*.env
+
+# Git
+.git
+.gitignore
+
+# Build outputs
+bin/
+obj/
+
+# VS / Rider / IDE junk
+.vscode/
+.idea/
+
+# Logs
+*.log
