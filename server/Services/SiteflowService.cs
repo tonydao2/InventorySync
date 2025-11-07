@@ -85,8 +85,6 @@ namespace InventorySync.Services
 
                         var item = allProducts.FirstOrDefault(p => p.Code == testItem);
 
-                        Console.WriteLine(item.Code, item.Id);
-
                         page++; // next page
                     }
                 }

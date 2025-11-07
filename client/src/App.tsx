@@ -189,6 +189,23 @@ function App() {
     }
   };
 
+  async function testLogs() {
+    try {
+      console.log('Test logs');
+      const res = await fetch(`${BASE_URL}/api/siteflow/test`, {
+        method: 'GET',
+      });
+
+      const data = await res.json();
+
+      console.log(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  testLogs();
+
   return (
     <div className='flex h-screen bg-gray-50'>
       {/* Left sidebar */}
